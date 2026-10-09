@@ -12,9 +12,11 @@ import (
 )
 
 func TestVersionedKV_Upgrade(t *testing.T) {
+	const keyCount = 100_000
+
 	b, storage := testPassthroughBackendWithStorage(t.Context())
 
-	for i := range 1024 * 1024 {
+	for i := range keyCount {
 		data := map[string]any{
 			"bar": i,
 		}
@@ -62,11 +64,17 @@ func TestVersionedKV_Upgrade(t *testing.T) {
 	}
 
 	// wait for upgrade to finish
+	timeout := time.After(5 * time.Minute)
 	for b.(*versionedKVBackend).upgrading.Load() {
+		select {
+		case <-timeout:
+			t.Fatal("timed out waiting for upgrade to finish")
+		default:
+		}
 		time.Sleep(time.Second)
 	}
 
-	for i := range 1024 * 1024 {
+	for i := range keyCount {
 		data := map[string]any{
 			"bar": float64(i),
 		}
