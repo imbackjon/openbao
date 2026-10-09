@@ -190,6 +190,9 @@ func TestLogger_SetupLoggerWithInValidLogPath(t *testing.T) {
 }
 
 func TestLogger_SetupLoggerWithInValidLogPathPermission(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("skipping: running as root bypasses directory permissions")
+	}
 	tmpDir := "/tmp/" + t.Name()
 
 	err := os.Mkdir(tmpDir, 0o000)
